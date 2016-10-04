@@ -1,0 +1,16 @@
+<universe>
+    <galaxy>
+        <world>
+            nada
+        </world>
+    </galaxy>
+    <galaxy>
+        <world>
+            earth
+        </world>
+        <world/>
+        <timelord>
+            who
+        </timelord>
+    </galaxy>
+</universe>
