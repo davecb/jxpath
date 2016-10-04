@@ -1,6 +1,6 @@
 **jxpath -- path expressions for json**
 
-This is a path-expresion program for experimenting with
+This is a path-expression program for experimenting with
 people's json and xml APIs.
 
 The business interest is in having a lightweight tool
