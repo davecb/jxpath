@@ -1,4 +1,5 @@
 // Package lexer -- lexer and parser for xml, one of trio of peer classes for xml, json and csv.
+// FIXME this uses prefix, and peeks at the (exported) innards of lexer.Lexer
 package lexer
 
 import (
@@ -57,7 +58,7 @@ func  run(l * lexer.Lexer) {
 func lexTag(l *lexer.Lexer) stateFn {
 	var tokenTypeFound token.Type
 
-	defer t.Begin(l.Input[l.Start:])()
+	defer t.Begin(l.Rest())()
 	// Process the first character
 	if !strings.HasPrefix(l.Input[l.Pos:], "<") {
 		l.Backup();
@@ -66,10 +67,10 @@ func lexTag(l *lexer.Lexer) stateFn {
 	}
 
 	// We have a <, do we have an </ or not?
-	t.Printf("right now, Start is at %s\n", l.Input[l.Start:])
+	t.Printf("right now, Start is at %s\n", l.Rest())
 	l.Next() // skip past the <
 	l.Ignore()
-	t.Printf("after ignore, Start is at %s\n", l.Input[l.Start:])
+	t.Printf("after ignore, Start is at %s\n", l.Rest())
 	tokenTypeFound = token.BEGIN // Subject to change, though
 
 	if l.Next() == '/' {
@@ -118,9 +119,9 @@ func lexTag(l *lexer.Lexer) stateFn {
 // Lex text as a VALUE
 func lexText(l *lexer.Lexer) stateFn {
 
-	defer t.Begin(l.Input[l.Start:])()
-	t.Printf("Input=%q\n", l.Input[l.Start:])
-	if l.Input[l.Start:] == "" {
+	defer t.Begin(l.Rest())()
+	t.Printf("Input=%q\n", l.Rest())
+	if l.Rest() == "" {
 		t.Print("Emitting EOF, returning nil\n")
 		l.Emit(token.EOF, "")
 		return nil      // Stop the run loop.
