@@ -26,7 +26,7 @@ func main() {
 	var source string
 	var pathExpression string
 	var inputType string
-	var t *trace.Trace
+	var t trace.Trace
 	var x, j, c, explain, tracing bool
 
 	flag.BoolVar(&x, "xml", false, "parse xml input")
@@ -117,7 +117,7 @@ func main() {
 
 	} else if inputType == "csv" {
 		// and eventually if -c, csv files
-		fmt.Fprintf(os.Stderr, "Sorry, .csv isn't implemented yet.")
+		fmt.Fprint(os.Stderr, "Sorry, .csv isn't implemented yet.")
 		return
 	}
 }
@@ -125,7 +125,7 @@ func main() {
 
 
 // evaluate applies the path expression to the tokenized inputs
-func evaluate(tokens []token.Token, pathExpression string, explain bool, t *trace.Trace) string {
+func evaluate(tokens []token.Token, pathExpression string, explain bool, t trace.Trace) string {
 	defer t.Begin(tokens, explain, t)()
 
 	path := pathExpr.NewPath(tokens, t)
@@ -139,7 +139,7 @@ func evaluate(tokens []token.Token, pathExpression string, explain bool, t *trac
 
 // guessType guesses at the type of a file: xml and json are the only interesting ones,
 // and just maybe .csv
-func guessType(s string, t *trace.Trace) string {
+func guessType(s string, t trace.Trace) string {
 	defer t.Begin(s)()
 	if strings.Contains(s, "<?xml") || strings.Contains(s, "</") || strings.Contains(s, "/>") {
 		return "xml"

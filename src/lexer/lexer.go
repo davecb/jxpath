@@ -13,20 +13,23 @@ import (
 const eof = -1  // is this a good idea or unneeded complexity?
 		// FIXME figure out of empty strings are better than eofs
 
+var t  trace.Trace
+
 
 // Lexer is the underlying data structure for the two language-specific lexers
 type Lexer struct {
-	Input string		// the string being scanned.
-	Pipe  chan token.Token	// channel of parser.Tokens.
-	Start int		// start position of this item.		HIDE
-	Pos   int		// current position in the input.	HIDE
-	Width int		// width of last rune read from input.	HIDE
-	Stack []string		// for begin-end matching
-	*trace.Trace     	// a composed-in tracer FIXME if wrong
+	Input string           // the string being scanned.
+	Pipe  chan token.Token // channel of parser.Tokens.
+	Start int              // start position of this item.		HIDE
+	Pos   int              // current position in the input.	HIDE
+	Width int              // width of last rune read from input.	HIDE
+	Stack []string         // for begin-end matching
+	//trace.Trace       // a composed-in tracer FIXME if wrong
 }
 
-func NewLexer(input string, pipe chan token.Token, tp *trace.Trace) (*Lexer) {
-	var l = Lexer{input, pipe, 0, 0, 0, nil, tp}
+func NewLexer(input string, pipe chan token.Token, tp trace.Trace) (*Lexer) {
+	var l = Lexer{input, pipe, 0, 0, 0, nil}
+	t = tp
 	return &l
 }
 
@@ -41,24 +44,24 @@ func (l *Lexer) AcceptQstring() string {
 	var nextc int
 	var s string
 
-	defer l.Begin()()
-	l.Printf("starting with %.40q ....\n",l.Rest())
+	defer t.Begin()()
+	t.Printf("starting with %.40q ....\n",l.Rest())
 	l.Next()  // strip off "
 	l.Ignore()
 	for {
 		if nextc = l.Next(); nextc == '"' || nextc == eof {
-			//l.Printf("rejected %q\n", nextc)
+			//t.Printf("rejected %q\n", nextc)
 			break
 		}
 		if nextc == '\\' {
 			// accept this and the next character blindly
 			l.Next()
 		}
-		//l.Printf("accepted %q\n", nextc)
+		//t.Printf("accepted %q\n", nextc)
 	}
 	l.Backup()
 	s = l.Current()
-	l.Printf("returning %q\n", s)
+	t.Printf("returning %q\n", s)
 	l.Next()
 	l.Ignore()
 	return s
@@ -68,19 +71,19 @@ func (l *Lexer) AcceptQstring() string {
 func (l *Lexer) AcceptVariableName() string {
 	var nextc int
 
-	defer l.Begin()()
+	defer t.Begin()()
 	for {
 		nextc = l.Next()
 		if !unicode.IsLetter(rune(nextc)) &&
 			!unicode.IsNumber(rune(nextc)) &&
 			nextc != '_' {
-			//l.Printf("rejected %q\n", nextc)
+			//t.Printf("rejected %q\n", nextc)
 			break
 		}
-		//l.Printf("accepted %q\n", nextc)
+		//t.Printf("accepted %q\n", nextc)
 	}
 	if (nextc == eof) {
-		l.Print("unexpected eof")
+		t.Print("unexpected eof")
 		l.Emit(token.EOF, l.Current())
 		return ""
 	}
@@ -151,13 +154,13 @@ func (l *Lexer) Backup() {
 // FIXME take out commas later, or make into a ...parameter
 //
 func (l *Lexer) SkipOver() {
-	defer l.Begin()()
+	defer t.Begin()()
 	for {
 		nextc := l.Next()
 		if unicode.IsSpace(rune(nextc)) {
-			l.Printf("skipped whitespace %q\n", nextc)
+			t.Printf("skipped whitespace %q\n", nextc)
 		} else if nextc == ',' {
-			l.Print("skipped comma\n")
+			t.Print("skipped comma\n")
 		} else {
 			break // something else
 		}
@@ -173,17 +176,17 @@ func (l *Lexer) SkipOver() {
 
 // Push pushes a <BEGIN name>'s name on the stack
 func (l *Lexer) Push(name string ) {
-	defer l.Begin(name)()
+	defer t.Begin(name)()
 
 	l.Stack = append(l.Stack, name)
-	l.Printf("pushing onto %v\n", l.Stack)
+	t.Printf("pushing onto %v\n", l.Stack)
 }
 
 // Pop pops a <BEGIN>' name off for an <END name>
 func (l *Lexer) Pop() string {
-	defer l.Begin()()
+	defer t.Begin()()
 
-	l.Printf("popping from %v\n", l.Stack)
+	t.Printf("popping from %v\n", l.Stack)
 	length := len(l.Stack)
 	if length < 1 {
 		return "STACK UNDERFLOW"

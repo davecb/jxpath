@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"strings"
 	"os"
-	"io/ioutil"
+	//"io/ioutil"
 )
 
 /*
@@ -21,13 +21,11 @@ import (
 // Path is a set of tokens to traverse
 type Path []token.Token
 
-var t *trace.Trace
-var traceFp = ioutil.Discard
 var warnings = 0  // Serially reusable, courtesy of this.
 //var errors = 0  / future
 
 // NewPath creates a new path from a slice of Tokens
-func NewPath(input []token.Token, trace *trace.Trace) Path {
+func NewPath(input []token.Token, trace trace.Trace) Path {
 	t = trace
 	defer t.Begin(input)()
 	return input

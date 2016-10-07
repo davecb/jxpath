@@ -10,12 +10,12 @@ import (
 	"unicode/utf8"
 	"strconv"
 )
-
+var t trace.Trace
 
 // Interpreter reads a string like /universe/world or /match[opponent="fred"]
 // and return either a value or an explanation. For learning purposes, this
 // is a non-lexing string-walk.
-func (p Path) Interpreter(expression string, t *trace.Trace, returnExplanation ...bool) string {
+func (p Path) Interpreter(expression string, t trace.Trace, returnExplanation ...bool) string {
 	var elementName, expressionName, expressionValue string
 	var previousElement = ""
 	var parseThusFar = "/"  // for error reporting

@@ -11,62 +11,65 @@ import (
 	"unicode"
 )
 
+var t trace.Trace
+
 // stateFn represents the state of the scanner
 // as a function that returns the next state.
 type stateFn func(*lexer.Lexer) stateFn
 
 // Type jLex composes a low-level Lexer into this one
 type jLex struct {
-     *lexer.Lexer	// the lower-level lexer 
-     *trace.Trace	// compose in Begin. Print, Printf
+     *lexer.Lexer     // the lower-level lexer
+     //trace.Trace // compose in Begin. Print, Printf
 }
 
 const eof = -1  	// see note in lexer re is this good or not
 
 // Lex is the entry point to the json lexer
-func Lex(input string, tp *trace.Trace) ([]token.Token) {
+func Lex(input string, tp trace.Trace) ([]token.Token) {
 
+	t = tp
 	var slice  = make([]token.Token, 0)
 	input = strings.TrimSpace(input)
 	l := lexer.NewLexer(input, make(chan token.Token), tp)
-	defer l.Begin(input)()
+	defer t.Begin(input)()
 
 	go run(l) // closes pipe
 	slice = parse(l, slice)
-	l.Printf("returning %s\n", slice)
+	t.Printf("returning %s\n", slice)
 	return slice
 }
 
 // parse accepts the lexemes from run and returns when it has them all
 // Right now it's the null parser. Not shared, as it's not always going
 // to be null.
-func parse(l * lexer.Lexer, slice []token.Token) []token.Token {
+func parse(l *lexer.Lexer, slice []token.Token) []token.Token {
 	var tok token.Token
 
-	//defer l.Begin()()
+	//defer t.Begin()()
 	for {
 		tok = <- l.Pipe
 		slice = append(slice, tok)
-		//l.Printf("parse: appending %v to the slice\n", tok)
+		//t.Printf("parse: appending %v to the slice\n", tok)
 		if tok.Typ == token.EOF || tok.Typ == token.ERROR || tok.Typ == token.PAD {
-			l.Printf("at end, token = %s", tok)
+			t.Printf("at end, token = %s", tok)
 			break
 		}
 	}
-	//l.Printf("parse: at end of parse loop, slice = %v\n", slice)
+	//t.Printf("parse: at end of parse loop, slice = %v\n", slice)
 	return slice
 }
 
 // Run lexes the Input by executing state functions until
 // the state is nil, then closes its output
 func run(l *lexer.Lexer) {
-	defer l.Begin(l)()
+	defer t.Begin(l)()
 
 	for state := lexUnnamedBegin; state != nil; {
 		state = state(l)
 	}
 	// FIXME is this reached? Yes, I had a *t vs t bug!
-	l.Print("At end of l.run(), is this recorded?")
+	t.Print("At end of l.run(), is this recorded?")
 	close(l.Pipe)
 }
 
@@ -74,9 +77,9 @@ func run(l *lexer.Lexer) {
 // lexUnnamedBegin recognizes a naked "{" at the beginning of
 // a json expression.
 func lexUnnamedBegin(l *lexer.Lexer) stateFn {
-	defer l.Begin()()
+	defer t.Begin()()
 
-	l.Printf("starting with %.40q ...\n",l.Rest())
+	t.Printf("starting with %.40q ...\n",l.Rest())
 	l.SkipOver()
 	if strings.HasPrefix(l.Rest(), "{") {
 		l.Next()
@@ -91,16 +94,16 @@ func lexUnnamedBegin(l *lexer.Lexer) stateFn {
 // lexJson lexes a json name, ending in a colon:
 func lexName(l *lexer.Lexer) stateFn {
 	var cantidateName string
-	defer l.Begin()()
+	defer t.Begin()()
 
-	l.Printf("starting with %.40q ...\n",l.Rest())
+	t.Printf("starting with %.40q ...\n",l.Rest())
 	l.SkipOver()
 	// Expect },  letters, qstring, or eof
 	var nextc = l.Next()
 	if nextc == '}' {
 		// We hit the end of a block
 		name := l.Pop()
-		l.Printf("found a }, ending %s\n", name)
+		t.Printf("found a }, ending %s\n", name)
 		l.Emit(token.END, name)
 		return lexName
 
@@ -110,17 +113,17 @@ func lexName(l *lexer.Lexer) stateFn {
 		cantidateName = l.AcceptVariableName()
 		l.Next()
 		l.Ignore()
-		l.Printf("got quoted text `%s`\n", cantidateName)
+		t.Printf("got quoted text `%s`\n", cantidateName)
 
 	} else if unicode.IsLetter(rune(nextc)) {
 		// Found an ordinary unquoted name
 		l.Backup()
 		cantidateName = l.AcceptVariableName()
 		//cantidateName = l.Current()
-		l.Printf("got text `%s`\n", l.Current())
+		t.Printf("got text `%s`\n", l.Current())
 
 	} else if (nextc == eof) {
-		l.Print("got eof")
+		t.Print("got eof")
 		l.Emit(token.EOF, "")
 		return nil
 
@@ -131,11 +134,11 @@ func lexName(l *lexer.Lexer) stateFn {
 	// Postcondtion: we have a name, candidate for a <BEGIN name>
 
 	// expect a colon
-	l.Printf("continuing with %s\n", l.Rest())
+	t.Printf("continuing with %s\n", l.Rest())
 	l.SkipOver()
 	nextc = l.Next()
 	if nextc == ':' {
-		l.Printf("got a name, %s\n", cantidateName)
+		t.Printf("got a name, %s\n", cantidateName)
 		// success, Push name here
 		l.Push(cantidateName)
 		l.Emit(token.BEGIN, cantidateName)
@@ -153,8 +156,8 @@ func lexName(l *lexer.Lexer) stateFn {
 // lexValue recognizes begin-block ("{") and qstring values
 func lexValue(l *lexer.Lexer) stateFn {
 	var cantidateValue string
-	defer l.Begin()()
-	l.Printf("starting with %.40q ...\n",l.Rest())
+	defer t.Begin()()
+	t.Printf("starting with %.40q ...\n",l.Rest())
 	l.SkipOver()
 
 	// Expect {, qstring, or eof

@@ -17,10 +17,10 @@ import (
 type stateFn func(*lexer.Lexer) stateFn
 
 var eof = -1
-var t *trace.Trace
+var t trace.Trace
 
 // Lex -- the entry point to the xml lexer
-func Lex(Input string, tp *trace.Trace) ([]token.Token) {
+func Lex(Input string, tp trace.Trace) ([]token.Token) {
 	Input = strings.TrimSpace(Input)
 	l := lexer.NewLexer(Input, make(chan token.Token), tp)
 	t = tp

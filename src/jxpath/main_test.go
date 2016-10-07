@@ -49,9 +49,9 @@ var jsonInput =
 
 // Do the usual debugging here, not in main.go
 func TestDebug(t *testing.T) {
-	var tracer *trace.Trace
-	tracer = trace.NewTrace(os.Stderr) // use stderr to trace
-	//tracer = trace.NewTrace(ioutil.Discard) // and this to not
+	var tracer trace.Trace
+	//tracer = trace.NewTrace(os.Stderr) // use stderr to trace
+	tracer = trace.NewTrace(ioutil.Discard) // and this to not
 
 	//var tokens []token.Token = xml_lexer.Lex(xmlInput, tracer) // xml
 	var tokens = json_lexer.Lex(jsonInput, tracer) // json
@@ -79,7 +79,7 @@ func TestDebug(t *testing.T) {
 
 // Test the main-line as a function, these are the successes
 func TestXmlPaths(t *testing.T) {
-	var tracer *trace.Trace   // use stderr to trace
+	var tracer trace.Trace   // use stderr to trace
 	tracer = trace.NewTrace(os.Stderr)
 	tracer = trace.NewTrace(ioutil.Discard) // and this to not
 
@@ -88,7 +88,7 @@ func TestXmlPaths(t *testing.T) {
 }
 
 func TestJsonPaths(t *testing.T) {
-	var tracer *trace.Trace   // use stderr to trace
+	var tracer trace.Trace   // use stderr to trace
 	tracer = trace.NewTrace(os.Stderr)
 	tracer = trace.NewTrace(ioutil.Discard) // and this to not
 
@@ -96,7 +96,7 @@ func TestJsonPaths(t *testing.T) {
 	goodPathTests(t, tokens, tracer);
 }
 
-func goodPathTests(t *testing.T, tokens []token.Token, tracer *trace.Trace)  {
+func goodPathTests(t *testing.T, tokens []token.Token, tracer trace.Trace)  {
 	var tests = []struct {
 		expr    string
 		expect  string
@@ -127,7 +127,7 @@ func goodPathTests(t *testing.T, tokens []token.Token, tracer *trace.Trace)  {
 
 // Test things that issue warnings
 func TestXmlBadPaths(t *testing.T) {
-	var tracer *trace.Trace   // use stderr to trace
+	var tracer trace.Trace   // use stderr to trace
 	tracer = trace.NewTrace(os.Stderr)
 	tracer = trace.NewTrace(ioutil.Discard) // and this to not
 
@@ -136,7 +136,7 @@ func TestXmlBadPaths(t *testing.T) {
 }
 
 func TestJsonBadPaths(t *testing.T) {
-	var tracer *trace.Trace   // use stderr to trace
+	var tracer trace.Trace   // use stderr to trace
 	tracer = trace.NewTrace(os.Stderr)
 	tracer = trace.NewTrace(ioutil.Discard) // and this to not
 
@@ -144,7 +144,7 @@ func TestJsonBadPaths(t *testing.T) {
 	badPathTests(t, tokens, tracer);
 }
 
-func badPathTests(t *testing.T, tokens []token.Token, tracer *trace.Trace)  {
+func badPathTests(t *testing.T, tokens []token.Token, tracer trace.Trace)  {
 	var tests = []struct {
 		expr   string
 		expect string
