@@ -86,13 +86,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Single trace stream if turned on, otherwise silent.
 	if tracing {
 		t = trace.NewTrace(os.Stderr)
 	} else {
 		t = trace.NewTrace(ioutil.Discard)
 	}
 
-	// All the options are known, now use them
+	// All the options are known, now use them.
 	defer t.Begin()()
 	t.Printf("args=%s\n", flag.Args())
 
@@ -102,20 +103,21 @@ func main() {
 	}
 
 	var i int
-	if inputType == "xml" {
+	switch (inputType) {
+	case "xml":
 		tokens := xml_lexer.Lex(source, t)
 		for i, pathExpression = range flag.Args() {
 			value := evaluate(tokens, pathExpression, explain, t)
 			fmt.Printf("%d: path expression %q selected %q\n", i, pathExpression, value)
 		}
-	} else if inputType == "json" {
+	case "json":
 		tokens := json_lexer.Lex(source, t)
 		for i, pathExpression = range flag.Args() {
 			value := evaluate(tokens, pathExpression, explain, t)
 			fmt.Printf("%d: path expression %q selected %q\n", i, pathExpression, value)
 		}
 
-	} else if inputType == "csv" {
+	case "csv":
 		// and eventually if -c, csv files
 		fmt.Fprint(os.Stderr, "Sorry, .csv isn't implemented yet.")
 		return

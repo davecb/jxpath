@@ -17,14 +17,13 @@ import (
 type stateFn func(*lexer.Lexer) stateFn
 
 var eof = -1
-var t trace.Trace
 
 // Lex -- the entry point to the xml lexer
 func Lex(Input string, tp trace.Trace) ([]token.Token) {
 	Input = strings.TrimSpace(Input)
 	l := lexer.NewLexer(Input, make(chan token.Token), tp)
-	t = tp
-	defer t.Begin(Input)()
+	
+	defer l.Begin(Input)()
 
 	go run(l) // Run the lexer, closes pipe
 
@@ -45,7 +44,7 @@ func Lex(Input string, tp trace.Trace) ([]token.Token) {
 // Run lexes the Input by executing state functions until
 // the state is nil.
 func  run(l * lexer.Lexer) {
-	defer t.Begin(l)()
+	defer l.Begin(l)()
 	for state := lexTag; state != nil; {
 		state = state(l)
 	}
@@ -58,19 +57,19 @@ func  run(l * lexer.Lexer) {
 func lexTag(l *lexer.Lexer) stateFn {
 	var tokenTypeFound token.Type
 
-	defer t.Begin(l.Rest())()
+	defer l.Begin(l.Rest())()
 	// Process the first character
 	if !strings.HasPrefix(l.Input[l.Pos:], "<") {
 		l.Backup();
-		t.Print("redirect to lexText\n")
+		l.Print("redirect to lexText\n")
 		return lexText
 	}
 
 	// We have a <, do we have an </ or not?
-	t.Printf("right now, Start is at %s\n", l.Rest())
+	l.Printf("right now, Start is at %s\n", l.Rest())
 	l.Next() // skip past the <
 	l.Ignore()
-	t.Printf("after ignore, Start is at %s\n", l.Rest())
+	l.Printf("after ignore, Start is at %s\n", l.Rest())
 	tokenTypeFound = token.BEGIN // Subject to change, though
 
 	if l.Next() == '/' {
@@ -107,7 +106,7 @@ func lexTag(l *lexer.Lexer) stateFn {
 		}
 	}
 	// do parser.Token end and eof if unclosed
-	t.Print("Emiting output\n")
+	l.Print("Emiting output\n")
 	if l.Pos > l.Start {
 		l.Emit(token.BEGIN, l.Current())
 	}
@@ -119,10 +118,10 @@ func lexTag(l *lexer.Lexer) stateFn {
 // Lex text as a VALUE
 func lexText(l *lexer.Lexer) stateFn {
 
-	defer t.Begin(l.Rest())()
-	t.Printf("Input=%q\n", l.Rest())
+	defer l.Begin(l.Rest())()
+	l.Printf("Input=%q\n", l.Rest())
 	if l.Rest() == "" {
-		t.Print("Emitting EOF, returning nil\n")
+		l.Print("Emitting EOF, returning nil\n")
 		l.Emit(token.EOF, "")
 		return nil      // Stop the run loop.
 	}
@@ -131,7 +130,7 @@ func lexText(l *lexer.Lexer) stateFn {
 			if l.Pos > l.Start {
 				l.Emit(token.VALUE, l.Current())
 			}
-			t.Print("redirect to lexTag\n")
+			l.Print("redirect to lexTag\n")
 			return lexTag // Next state.
 		}
 		if l.Next() == eof {
@@ -139,7 +138,7 @@ func lexText(l *lexer.Lexer) stateFn {
 		}
 	}
 	if l.Pos > l.Start {
-		t.Print("Emitting output\n")
+		l.Print("Emitting output\n")
 		l.Emit(token.VALUE, l.Current())
 	}
 	l.Emit(token.EOF, "")
