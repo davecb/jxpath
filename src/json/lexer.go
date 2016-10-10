@@ -30,7 +30,7 @@ func Lex(input string, tp trace.Trace) ([]token.Token) {
 	
 	var slice  = make([]token.Token, 0)
 	input = strings.TrimSpace(input)
-	l := lexer.NewLexer(input, make(chan token.Token), tp)
+	l := lexer.New(input, make(chan token.Token), tp)
 	defer l.Begin(input)()
 
 	go run(l) // closes pipe

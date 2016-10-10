@@ -1,9 +1,9 @@
 DIRS=./src/pathExpr ./src/xml ./src/json ./src/trace ./src/jxpath
-FILES=${shell find ${DIRS} -type f  | grep -v 'RCS'}
+FILES=${shell find ${DIRS} -type f  | egrep -v 'RCS|.iml|.idea'}
 
 all:
 	@echo "ci, co or rcsout, here"
-	# echo ${FILES}
+	#echo ${FILES}
 
 
 cil:

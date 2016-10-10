@@ -1,5 +1,6 @@
 // Package lexer -- lexer and parser for xml, one of trio of peer classes for xml, json and csv.
 // FIXME this uses prefix, and peeks at the (exported) innards of lexer.Lexer
+// changing to use a prefix in lexer
 package lexer
 
 import (
@@ -21,7 +22,7 @@ var eof = -1
 // Lex -- the entry point to the xml lexer
 func Lex(Input string, tp trace.Trace) ([]token.Token) {
 	Input = strings.TrimSpace(Input)
-	l := lexer.NewLexer(Input, make(chan token.Token), tp)
+	l := lexer.New(Input, make(chan token.Token), tp)
 	
 	defer l.Begin(Input)()
 
@@ -59,7 +60,7 @@ func lexTag(l *lexer.Lexer) stateFn {
 
 	defer l.Begin(l.Rest())()
 	// Process the first character
-	if !strings.HasPrefix(l.Input[l.Pos:], "<") {
+	if ! l.HasPrefix("<") {
 		l.Backup();
 		l.Print("redirect to lexText\n")
 		return lexText
@@ -82,7 +83,7 @@ func lexTag(l *lexer.Lexer) stateFn {
 	// Process the remaining characters
 	for {
 		// handle <foo/>
-		if strings.HasPrefix(l.Input[l.Pos:], "/>") {
+		if l.HasPrefix("/>") {
 			l.Emit(tokenTypeFound, l.Current())
 			l.Emit(token.VALUE, "")
 			l.Emit(token.END,l.Current())
@@ -93,7 +94,7 @@ func lexTag(l *lexer.Lexer) stateFn {
 		}
 
 		// consume, discarding including tag-end character
-		if strings.HasPrefix(l.Input[l.Pos:], ">") {
+		if l.HasPrefix(">") {
 			l.Emit(tokenTypeFound, l.Current())
 			l.Next()
 			l.Ignore()
@@ -107,8 +108,9 @@ func lexTag(l *lexer.Lexer) stateFn {
 	}
 	// do parser.Token end and eof if unclosed
 	l.Print("Emiting output\n")
-	if l.Pos > l.Start {
-		l.Emit(token.BEGIN, l.Current())
+	s :=  l.Current()
+	if len(s) > 0 {
+		l.Emit(token.BEGIN, s)
 	}
 	l.Emit(token.EOF, "")
 	return nil
@@ -126,9 +128,10 @@ func lexText(l *lexer.Lexer) stateFn {
 		return nil      // Stop the run loop.
 	}
 	for {
-		if strings.HasPrefix(l.Input[l.Pos:], "<") {
-			if l.Pos > l.Start {
-				l.Emit(token.VALUE, l.Current())
+		if l.HasPrefix("<") {
+			s := l.Current()
+			if len(s) > 0 {
+				l.Emit(token.VALUE, s)
 			}
 			l.Print("redirect to lexTag\n")
 			return lexTag // Next state.
@@ -137,10 +140,12 @@ func lexText(l *lexer.Lexer) stateFn {
 			break
 		}
 	}
-	if l.Pos > l.Start {
+	s:= l.Current()
+	if len(s) > 0 {
 		l.Print("Emitting output\n")
 		l.Emit(token.VALUE, l.Current())
 	}
 	l.Emit(token.EOF, "")
 	return nil
 }
+
