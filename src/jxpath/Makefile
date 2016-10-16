@@ -8,8 +8,8 @@ deploy:
 run: # just check it's built
 	../../bin/jxpath --help; : 
 
-test:
-	go test
+race:
+	go test -race
 
 clean:
 	-go clean -i
@@ -33,5 +33,5 @@ PROFILE=-cpuprofile
 #PROFILE=-blockprofile
 #PROFILE=-memprofile
 profile:
-	go test -bench BenchmarkDrWho -run=NONE ${PROFILE}=profile.out
+	go test -bench BenchmarkEndToEnd -run=NONE ${PROFILE}=profile.out
 	go tool pprof -text -nodecount=${NODES} jxpath.test profile.out

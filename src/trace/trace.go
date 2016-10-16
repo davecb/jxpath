@@ -1,10 +1,7 @@
 /*
  * A go version of the Solaris apptrace logger.
- * It will get better as I learn more go. Right now
- * it likes things sequentialized, which is easy 
- * in lexer->parser schemes. Georg Nikodym did
- * the concurrent version on Solaris. Mine will
- * probably need a different log stream passed in
+ * It will get better as I learn more go.
+ * This needs a different log stream passed in
  * for each distinct tracer.
  */
 
@@ -17,6 +14,7 @@ import (
 	"runtime"
 	"fmt"
 	"io/ioutil"
+	"time"
 )
 
 // Trace -- the "apptrace(1)" view of a logger
@@ -30,6 +28,7 @@ type Trace interface {
 type RealTrace struct {
 	pipe  chan message
 	log   *log.Logger
+	expand bool
 }
 
 // message is what is passed through the pipe
@@ -38,22 +37,24 @@ type message struct {
 	s string     	// the string to indent
 }
 
-// NewTrace -- create one or more type of tracing program
-func NewTrace(fp io.Writer) Trace {
+// New -- create one or more type of tracing program
+func New(fp io.Writer, expand bool) Trace {
 	var real RealTrace
 	var fake FakeTrace
-	if fp == ioutil.Discard {
+	if fp == ioutil.Discard || fp == nil {
 		// do discarding less expensively
 		return &fake
 	}
+	real.expand = expand
 	real.log = log.New(fp, "", 0)
-
 	real.log.SetFlags(0)
+	real.log.Printf("start at %v", time.Now())
 	real.pipe = make(chan message)
 
 	go real.backend()
 	return &real
 }
+
 
 // Begin a function and return an at-end function for defer.
 func (t RealTrace) Begin(args ...interface{}) func() {
@@ -91,6 +92,7 @@ func (t RealTrace) backend() {
 	var direction string
 	var msg message
 
+
 	for {
 		msg = <-t.pipe
 		switch (msg.r) {
@@ -102,7 +104,14 @@ func (t RealTrace) backend() {
 		case '|':
 			direction = ""
 		}
-		t.log.Printf("%s%s%s", t.pad(indent), direction, msg.s)
+		if t.expand == true {
+			// Trace normally, typically to stderr/stdout
+			t.log.Printf("%s%s%s", t.pad(indent), direction, msg.s)
+		} else {
+			// Trace succinctly to expand later, typically
+			// to a logfile
+			t.log.Printf("%c%s", msg.r, msg.s)
+		}
 		if msg.r == '<' {
 			indent--
 		}

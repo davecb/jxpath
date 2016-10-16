@@ -50,8 +50,8 @@ var jsonInput =
 // Do the usual debugging here, not in main.go
 func TestDebug(t *testing.T) {
 	var tracer trace.Trace
-	//tracer = trace.NewTrace(os.Stderr) // use stderr to trace
-	tracer = trace.NewTrace(ioutil.Discard) // and this to not
+	tracer = trace.New(os.Stderr, true) // use stderr to trace
+	//tracer = trace.New(ioutil.Discard, true) // and this to not
 
 	//var tokens []token.Token = xml_lexer.Lex(xmlInput, tracer) // xml
 	var tokens = json_lexer.Lex(jsonInput, tracer) // json
@@ -76,24 +76,11 @@ func TestDebug(t *testing.T) {
 }
 
 
-// Test the classic search
-func BenchmarkLexer(b *testing.B) {
-	var tracer trace.Trace
-	//tracer = trace.NewTrace(os.Stderr) // use stderr to trace
-	tracer = trace.NewTrace(ioutil.Discard) // and this to not
-
-	for i := 0; i < b.N; i++ {
-		xml_lexer.Lex(xmlInput, tracer) // xml
-		//json_lexer.Lex(jsonInput, tracer) // json
-		//csv_lexer.Lex(jsonInput, tracer) // csv
-	}
-}
-
-// Test the classic search
+// Benchmark the classic search
 func BenchmarkDrWho(b *testing.B) {
 	var tracer trace.Trace
-	//tracer = trace.NewTrace(os.Stderr) // use stderr to trace
-	tracer = trace.NewTrace(ioutil.Discard) // and this to not
+	//tracer = trace.New(os.Stderr, true) // use stderr to trace
+	tracer = trace.New(ioutil.Discard, true) // and this to not
 
 	var tokens = xml_lexer.Lex(xmlInput, tracer) // xml
 	//var tokens = json_lexer.Lex(jsonInput, tracer) // json
@@ -115,11 +102,52 @@ func BenchmarkDrWho(b *testing.B) {
 	}
 }
 
+// Benchmark the whole suite, for the profiler
+func BenchmarkEndToEnd(b *testing.B) {
+	var tracer trace.Trace
+
+	for i := 0; i < b.N; i++ {
+		//tracer = trace.New(os.Stderr, true) // use stderr to trace
+		tracer = trace.New(ioutil.Discard, true) // and this to not
+
+		var tokens = xml_lexer.Lex(xmlInput, tracer) // xml
+		//var tokens = json_lexer.Lex(jsonInput, tracer) // json
+		//var tokens []token.Token = csv_lexer.Lex(jsonInput, tracer) // csv
+		var tests = []struct {
+			expr   string
+			expect string
+		}{
+			// current debug cases
+			{expr: `universe/galaxy[world="earth"]/timelord`, expect: `who`},
+		}
+
+		tracer.Begin()()
+		explain := false
+		for _, test := range tests {
+			evaluate(tokens, test.expr, explain, tracer)
+		}
+	}
+}
+
+// Benchmark the lexer alone
+func BenchmarkLexer(b *testing.B) {
+	var tracer trace.Trace
+	//tracer = trace.New(os.Stderr, true) // use stderr to trace
+	tracer = trace.New(ioutil.Discard, true) // and this to not
+
+	for i := 0; i < b.N; i++ {
+		xml_lexer.Lex(xmlInput, tracer) // xml
+		//json_lexer.Lex(jsonInput, tracer) // json
+		//csv_lexer.Lex(jsonInput, tracer) // csv
+	}
+}
+
+
 // Test the main-line as a function, these are the successes
 func TestXmlPaths(t *testing.T) {
 	var tracer trace.Trace   // use stderr to trace
-	tracer = trace.NewTrace(os.Stderr)
-	tracer = trace.NewTrace(ioutil.Discard) // and this to not
+	//tracer = trace.New(os.Stderr, true)
+	tracer = trace.New(ioutil.Discard, true) // and this to not
 
 	var tokens = xml_lexer.Lex(xmlInput, tracer)
 	goodPathTests(t, tokens, tracer);
@@ -127,8 +155,8 @@ func TestXmlPaths(t *testing.T) {
 
 func TestJsonPaths(t *testing.T) {
 	var tracer trace.Trace   // use stderr to trace
-	tracer = trace.NewTrace(os.Stderr)
-	tracer = trace.NewTrace(ioutil.Discard) // and this to not
+	//tracer = trace.New(os.Stderr, true)
+	tracer = trace.New(ioutil.Discard, true) // and this to not
 
 	var tokens = json_lexer.Lex(jsonInput, tracer)
 	goodPathTests(t, tokens, tracer);
@@ -166,8 +194,8 @@ func goodPathTests(t *testing.T, tokens []token.Token, tracer trace.Trace)  {
 // Test things that issue warnings
 func TestXmlBadPaths(t *testing.T) {
 	var tracer trace.Trace   // use stderr to trace
-	tracer = trace.NewTrace(os.Stderr)
-	tracer = trace.NewTrace(ioutil.Discard) // and this to not
+	//tracer = trace.New(os.Stderr, true)
+	tracer = trace.New(ioutil.Discard, true) // and this to not
 
 	var tokens = xml_lexer.Lex(xmlInput, tracer)
 	badPathTests(t, tokens, tracer);
@@ -175,8 +203,8 @@ func TestXmlBadPaths(t *testing.T) {
 
 func TestJsonBadPaths(t *testing.T) {
 	var tracer trace.Trace   // use stderr to trace
-	tracer = trace.NewTrace(os.Stderr)
-	tracer = trace.NewTrace(ioutil.Discard) // and this to not
+	//tracer = trace.New(os.Stderr, true)
+	tracer = trace.New(ioutil.Discard, true) // and this to not
 
 	var tokens = json_lexer.Lex(jsonInput, tracer)
 	badPathTests(t, tokens, tracer);

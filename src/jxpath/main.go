@@ -88,9 +88,9 @@ func main() {
 
 	// Single trace stream if turned on, otherwise silent.
 	if tracing {
-		t = trace.NewTrace(os.Stderr)
+		t = trace.New(os.Stderr, false)
 	} else {
-		t = trace.NewTrace(ioutil.Discard)
+		t = trace.New(ioutil.Discard, false)
 	}
 
 	// All the options are known, now use them.
