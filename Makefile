@@ -15,7 +15,7 @@ ci:
 co:
 	co -l ${FILES}
 
-rcsout:
+out: # rcsout
 	for i in ${DIRS}; do \
 		(cd $$i; rcsout); \
 	done

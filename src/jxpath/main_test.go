@@ -73,8 +73,46 @@ func TestDebug(t *testing.T) {
 				i, test.expr, test.expect, value)
 		}
 	}
+}
 
 
+// Test the classic search
+func BenchmarkLexer(b *testing.B) {
+	var tracer trace.Trace
+	//tracer = trace.NewTrace(os.Stderr) // use stderr to trace
+	tracer = trace.NewTrace(ioutil.Discard) // and this to not
+
+	for i := 0; i < b.N; i++ {
+		xml_lexer.Lex(xmlInput, tracer) // xml
+		//json_lexer.Lex(jsonInput, tracer) // json
+		//csv_lexer.Lex(jsonInput, tracer) // csv
+	}
+}
+
+// Test the classic search
+func BenchmarkDrWho(b *testing.B) {
+	var tracer trace.Trace
+	//tracer = trace.NewTrace(os.Stderr) // use stderr to trace
+	tracer = trace.NewTrace(ioutil.Discard) // and this to not
+
+	var tokens = xml_lexer.Lex(xmlInput, tracer) // xml
+	//var tokens = json_lexer.Lex(jsonInput, tracer) // json
+	//var tokens []token.Token = csv_lexer.Lex(jsonInput, tracer) // csv
+	var tests = []struct {
+		expr    string
+		expect  string
+	} {
+		// current debug cases
+		{ expr: `universe/galaxy[world="earth"]/timelord`, expect: `who`},
+	}
+
+	tracer.Begin()()
+	explain := false
+	for _, test := range tests {
+		for i := 0; i < b.N; i++ {
+			evaluate(tokens, test.expr, explain, tracer)
+		}
+	}
 }
 
 // Test the main-line as a function, these are the successes
