@@ -19,7 +19,7 @@ clean:
 regress:
 	../../bin/jxpath /timelord /galaxy <universe.xml
 
-# Stress test: get this to work
+# Stretch goal test: get this to work: requires attributes
 # jxpath /html/body/div/div[7]/div[2]/script <smileybarry.xml 
 
 bench:
@@ -35,3 +35,9 @@ PROFILE=-cpuprofile
 profile:
 	go test -bench BenchmarkEndToEnd -run=NONE ${PROFILE}=profile.out
 	go tool pprof -text -nodecount=${NODES} jxpath.test profile.out
+
+
+COVER=cover.out
+cover:
+	go test -run=Test[JX].* -coverprofile=${COVER}
+	go tool cover -html=${COVER}
