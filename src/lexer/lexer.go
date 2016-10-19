@@ -15,9 +15,6 @@ import (
 const eof = -1  // is this a good idea or unneeded complexity?
 		// FIXME figure out of empty strings are better than eofs
 
-//var t  trace.Trace
-
-
 // Lexer is the underlying data structure for the two language-specific lexers
 type Lexer struct {
 	input string           // the string being scanned.
@@ -102,6 +99,7 @@ func (l *Lexer) AcceptVariableName() string {
 
 // Emit passes an item to the parser via the pipe.
 func (l *Lexer) Emit(tt token.Type, s string) {
+	defer l.Begin(tt, s)()
 	value :=  token.Token{Typ: tt, Val:s}
 	l.Pipe <- value
 	l.start = l.pos // advance to pos
@@ -196,8 +194,9 @@ func (l *Lexer) Pop() string {
 
 // HasPrefix looks for a string without advancing. Used only
 // in xml parse. Json uses pushback instead of lookahead.
+// Mat=ybe perhaps doomed
 func (l *Lexer) HasPrefix(s string) bool {
-	defer l.Begin()()
+	defer l.Begin(s)()
 
 	return strings.HasPrefix(l.input[l.pos:], s)
 }

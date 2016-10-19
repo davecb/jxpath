@@ -13,25 +13,25 @@ import (
 )
 
 var xmlInput =
-	"<universe>" +
-		"<galaxy>" +
-			"<world>" +
-				"nada" +
-			"</world>" +
-		"</galaxy>" +
-		"<galaxy>" +
-			"<world>" +
-				"earth" +
-			"</world>" +
-			"<world/>" +    // A nameless world.
-			"<timelord>" +
-				"who" + // Dr Who, to be precise.
-			"</timelord>" +
-		"</galaxy>" +
-		"<timelord>"  +
-			"master" +  // Trapped outside of space and time.
-		"</timelord>" +
-	"</universe>"
+	`<universe marvel="false">` + // hawking="true">` +
+		`<galaxy>` +
+			`<world>` +
+				`nada` +
+			`</world>` +
+		`</galaxy>` +
+		`<galaxy>` +
+			`<world>` +
+				`earth` +
+			`</world>` +
+			`<world/>` +    // A nameless world.
+			`<timelord>` +
+				`who` + // Dr Who, to be precise.
+			`</timelord>` +
+		`</galaxy>` +
+		`<timelord>`  +
+			`master` +  // Trapped outside of space and time.
+		`</timelord>` +
+	`</universe>`
 
 var jsonInput =
 	`"universe":  {` +
@@ -53,18 +53,35 @@ func TestDebug(t *testing.T) {
 	tracer = trace.New(os.Stderr, true) // use stderr to trace
 	//tracer = trace.New(ioutil.Discard, true) // and this to not
 
-	//var tokens []token.Token = xml_lexer.Lex(xmlInput, tracer) // xml
-	var tokens = json_lexer.Lex(jsonInput, tracer) // json
+	tracer.Begin()()
+	var tokens []token.Token = xml_lexer.Lex(xmlInput, tracer) // xml
+	//var tokens = json_lexer.Lex(jsonInput, tracer) // json
 	//var tokens []token.Token = csv_lexer.Lex(jsonInput, tracer) // csv
 	var tests = []struct {
 		expr    string
 		expect  string
 	} {
-		// current debug cases
-		{ expr: `universe/galaxy[world="earth"]/timelord`, expect: `who`},
+		// clasic debug case
+		{ expr: `/universe/galaxy[world="earth"]/timelord`, expect: `who`},
+
+		// all the other cases, good and bad
+		//{ expr: "/world", expect:"nada", },
+		//{ expr: "//world", expect:"nada", },
+		//{ expr: "/galaxy/world", expect:"nada", },
+		//{ expr: "/universe/galaxy/world", expect:"nada", },
+		//{ expr: `/universe/galaxy[world="earth"]`, expect: `earth  who`},
+		//{ expr: `/universe/galaxy[world="earth"]/timelord`, expect: `who`},
+		//{ expr: `/galaxy[2]/timelord`, expect:`who` },
+		//{ expr: `/universe/galaxy[2]/timelord`, expect: `who`},
+		//{ expr: `/universe/timelord[2]`, expect: `master`},
+		//// warning-producers		{ expr: `/galaxy[world="nada"]/timelord`, expect: ``}, //
+		//{ expr: `/galaxy[world="venus"]/timelord`, expect: ``},
+		//{ expr: `/galaxy[1]/timelord`, expect: ``},
+		//{ expr: `/universe/galaxy[3]/timelord`, expect: ``},
+		//{ expr: `/galaxy[3]/timelord`, expect: ``},
+
 	}
 
-	tracer.Begin()()
 	explain := false
 	for i, test := range tests {
 		value := evaluate(tokens, test.expr, explain, tracer)
@@ -168,10 +185,10 @@ func goodPathTests(t *testing.T, tokens []token.Token, tracer trace.Trace)  {
 		expect  string
 	} {
 		// regular success cases
-		{ expr:"/world", expect:"nada", },
-		{ expr:"//world", expect:"nada", },
-		{ expr:"/galaxy/world", expect:"nada", },
-		{ expr:"/universe/galaxy/world", expect:"nada", },
+		{ expr: "/world", expect:"nada", },
+		{ expr: "//world", expect:"nada", },
+		{ expr: "/galaxy/world", expect:"nada", },
+		{ expr: "/universe/galaxy/world", expect:"nada", },
 		{ expr: `/universe/galaxy[world="earth"]`, expect: `earth  who`},
 		{ expr: `/universe/galaxy[world="earth"]/timelord`, expect: `who`},
 		{ expr: `/galaxy[2]/timelord`, expect:`who` },

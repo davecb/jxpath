@@ -9,6 +9,7 @@ import (
 	"trace"
 
 	"strings"
+	"unicode"
 )
 
 
@@ -57,35 +58,43 @@ func  run(l * lexer.Lexer) {
 // lexTag lexes an xml tag
 func lexTag(l *lexer.Lexer) stateFn {
 	var tokenTypeFound token.Type
+	var ch int
+	var s string
 
 	defer l.Begin(l.Rest())()
 	// Process the first character
-	if ! l.HasPrefix("<") {
+	ch = l.Next()
+	if ch != '<' {
 		l.Backup();
 		l.Print("redirect to lexText\n")
 		return lexText
 	}
 
 	// We have a <, do we have an </ or not?
-	l.Printf("right now, Start is at %s\n", l.Rest())
-	l.Next() // skip past the <
+	l.Printf("right now, start is at %s\n", l.Rest())
 	l.Ignore()
-	l.Printf("after ignore, Start is at %s\n", l.Rest())
+	l.Printf("after ignore, start is at %s\n", l.Rest())
 	tokenTypeFound = token.BEGIN // Subject to change, though
-
-	if l.Next() == '/' {
+	ch = l.Next()
+	if ch == '/' {
 		l.Ignore()
 		tokenTypeFound = token.END
 	} else {
 	       l.Backup()
 	}
+	// postcondition: we hit < or </
 
-	// Process the remaining characters
+	// Process the characters up to the end character
 	for {
-		// handle <foo/>
-		if l.HasPrefix("/>") {
+		ch = l.Next()
+		//  handle />
+		if ch == '/' {
+			// Then we hit /> or a grammar error
+			l.Backup()
 			l.Emit(tokenTypeFound, l.Current())
+			// emit an empty value
 			l.Emit(token.VALUE, "")
+			// and then end the type
 			l.Emit(token.END,l.Current())
 			l.Next()
 			l.Next()
@@ -94,31 +103,76 @@ func lexTag(l *lexer.Lexer) stateFn {
 		}
 
 		// consume, discarding including tag-end character
-		if l.HasPrefix(">") {
+		if ch == '>' {
+			l.Backup()
 			l.Emit(tokenTypeFound, l.Current())
 			l.Next()
 			l.Ignore()
 			return lexText
 		}
 
+		// Whoops, it has whitespace in it
+		// the name ends, the rest is attributes
+		if unicode.IsSpace(rune(ch)) {
+			// stop the begin/end here
+			l.Backup()
+			s = l.Current()
+
+			parseAttributes(l, tokenTypeFound, s) // must eat ? dunno
+			return lexTag // next thing may be < or \b
+		}
+
 		// Bail on eof
-		if l.Next() == eof {
+		if ch == eof {
+			l.Backup()
 			break
 		}
 	}
 	// do parser.Token end and eof if unclosed
 	l.Print("Emiting output\n")
-	s :=  l.Current()
+	s =  l.Current()
 	if len(s) > 0 {
-		l.Emit(token.BEGIN, s)
+		l.Emit(tokenTypeFound, s)
 	}
 	l.Emit(token.EOF, "")
 	return nil
 }
 
+// parseAttributes doesn't: it skips over attributes mindlessly
+func parseAttributes(l *lexer.Lexer, typeFound token.Type, name string) {
+	var ch int
+	defer l.Begin(typeFound, name)()
+
+	for {
+		ch = l.Next()
+		l.Printf("got %c\n", ch)
+
+		if ch == '/' {
+			// Then we hit /> or a grammar error
+			l.Emit(typeFound, name)
+			l.Next() // get >
+			l.Emit(token.END, name)
+			l.Ignore()
+			return
+		}
+
+		if ch == '>' {
+			l.Emit(typeFound, name)
+			l.Ignore()
+			l.Printf("after '>', rest=%q\n", l.Rest())
+			return
+		}
+		if ch == eof {
+			l.Backup()
+			return
+		}
+	}
+}
+
 
 // Lex text as a VALUE
 func lexText(l *lexer.Lexer) stateFn {
+	var ch int
 
 	defer l.Begin(l.Rest())()
 	l.Printf("Input=%q\n", l.Rest())
@@ -128,7 +182,9 @@ func lexText(l *lexer.Lexer) stateFn {
 		return nil      // Stop the run loop.
 	}
 	for {
-		if l.HasPrefix("<") {
+		ch = l.Next()
+		if ch == '<' {
+			l.Backup()
 			s := l.Current()
 			if len(s) > 0 {
 				l.Emit(token.VALUE, s)
@@ -136,7 +192,8 @@ func lexText(l *lexer.Lexer) stateFn {
 			l.Print("redirect to lexTag\n")
 			return lexTag // Next state.
 		}
-		if l.Next() == eof {
+		if ch == eof {
+			l.Backup()
 			break
 		}
 	}

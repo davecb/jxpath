@@ -25,3 +25,6 @@ rcsl:
 
 diff:
 	rcsdiff ${FILES}
+
+log: # report log message in use
+	cat src/jxpath/RCS/.main.go.checkin-comment
