@@ -31,7 +31,7 @@ func Lex(input string, tp trace.Trace) ([]token.Token) {
 	var slice  = make([]token.Token, 0)
 	input = strings.TrimSpace(input)
 	l := lexer.New(input, make(chan token.Token), tp)
-	defer l.Begin(input)()
+	defer l.Begin()()
 
 	go run(l) // closes pipe
 	slice = parse(l, slice)
@@ -62,7 +62,7 @@ func parse(l *lexer.Lexer, slice []token.Token) []token.Token {
 // Run lexes the Input by executing state functions until
 // the state is nil, then closes its output
 func run(l *lexer.Lexer) {
-	defer l.Begin(l)()
+	defer l.Begin()()
 
 	for state := lexUnnamedBegin; state != nil; {
 		state = state(l)
@@ -133,7 +133,7 @@ func lexName(l *lexer.Lexer) stateFn {
 	// Postcondtion: we have a name, candidate for a <BEGIN name>
 
 	// expect a colon
-	l.Printf("continuing with %s\n", l.Rest())
+	l.Printf("continuing with %.40q ...\n", l.Rest())
 	l.SkipOver()
 	nextc = l.Next()
 	if nextc == ':' {

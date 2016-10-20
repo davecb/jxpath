@@ -25,11 +25,11 @@ func Lex(Input string, tp trace.Trace) ([]token.Token) {
 	Input = strings.TrimSpace(Input)
 	l := lexer.New(Input, make(chan token.Token), tp)
 	
-	defer l.Begin(Input)()
+	defer l.Begin()()
 
 	go run(l) // Run the lexer, closes pipe
 
-	// Simulate a parser, send done when done
+	// Simulate a parser, return only when done
 	var slice []token.Token
 	var tok token.Token
 	for {
@@ -39,7 +39,6 @@ func Lex(Input string, tp trace.Trace) ([]token.Token) {
 			break
 		}
 	}
-	
 	return slice
 }
 
@@ -54,14 +53,13 @@ func  run(l * lexer.Lexer) {
 }
 
 
-
 // lexTag lexes an xml tag
 func lexTag(l *lexer.Lexer) stateFn {
 	var tokenTypeFound token.Type
 	var ch int
 	var s string
 
-	defer l.Begin(l.Rest())()
+	defer l.Begin()()
 	// Process the first character
 	ch = l.Next()
 	if ch != '<' {
@@ -71,9 +69,9 @@ func lexTag(l *lexer.Lexer) stateFn {
 	}
 
 	// We have a <, do we have an </ or not?
-	l.Printf("right now, start is at %s\n", l.Rest())
+	l.Printf("right now, start is at %.40q ...\n", l.Rest())
 	l.Ignore()
-	l.Printf("after ignore, start is at %s\n", l.Rest())
+	l.Printf("after ignore, start is at %.40q ...\n", l.Rest())
 	tokenTypeFound = token.BEGIN // Subject to change, though
 	ch = l.Next()
 	if ch == '/' {
@@ -139,13 +137,14 @@ func lexTag(l *lexer.Lexer) stateFn {
 }
 
 // parseAttributes doesn't: it skips over attributes mindlessly
+// mayve a recursive loop lexing until we hit the > then nil
 func parseAttributes(l *lexer.Lexer, typeFound token.Type, name string) {
 	var ch int
 	defer l.Begin(typeFound, name)()
 
 	for {
 		ch = l.Next()
-		l.Printf("got %c\n", ch)
+		//l.Printf("got %c\n", ch)
 
 		if ch == '/' {
 			// Then we hit /> or a grammar error
@@ -159,7 +158,7 @@ func parseAttributes(l *lexer.Lexer, typeFound token.Type, name string) {
 		if ch == '>' {
 			l.Emit(typeFound, name)
 			l.Ignore()
-			l.Printf("after '>', rest=%q\n", l.Rest())
+			l.Printf("after '>', rest=%.40q ...\n", l.Rest())
 			return
 		}
 		if ch == eof {
@@ -174,8 +173,8 @@ func parseAttributes(l *lexer.Lexer, typeFound token.Type, name string) {
 func lexText(l *lexer.Lexer) stateFn {
 	var ch int
 
-	defer l.Begin(l.Rest())()
-	l.Printf("Input=%q\n", l.Rest())
+	defer l.Begin()()
+	l.Printf("Input=%.40q ...\n", l.Rest())
 	if l.Rest() == "" {
 		l.Print("Emitting EOF, returning nil\n")
 		l.Emit(token.EOF, "")

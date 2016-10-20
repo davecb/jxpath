@@ -27,7 +27,7 @@ var warnings = 0  // Serially reusable, courtesy of this.
 // NewPath creates a new path from a slice of Tokens
 func NewPath(input []token.Token, trace trace.Trace) Path {
 	t = trace
-	defer t.Begin(input)()
+	defer t.Begin()()
 	return input
 }
 
@@ -70,7 +70,7 @@ func (p Path) Warnings() int {
 // FindFirst finds the first instance of a sub-path within the global path.
 func (p Path) FindFirst(target string) Path {
 
-	defer t.Begin(target, p)()
+	defer t.Begin(target)()
 	var beginning int
 	// traverse input to target, return there to the end
 	for  i := range p {
@@ -100,7 +100,7 @@ func (p Path) FindFirst(target string) Path {
 func (p Path) FindNext(target string) Path {
 	var q Path
 
-	defer t.Begin(target, p)()
+	defer t.Begin(target)()
 	if cap(p) > len(p) {
 		// we can skip path the end of p?
 		q = p[len(p):cap(p)]
@@ -116,7 +116,7 @@ func (p Path) FindNext(target string) Path {
 func (p Path) FindSuchThat(element, tokenName, desiredValue string) Path {
 	var q = p
 
-	defer t.Begin(element, tokenName, desiredValue,p)()
+	defer t.Begin(element, tokenName, desiredValue)()
 	t.Printf("input=%s\n", p)
 
 	// advance to the beginning of the first galaxy, at BEGIN element
@@ -144,7 +144,7 @@ func (p Path) FindSuchThat(element, tokenName, desiredValue string) Path {
 func (p Path) FindNth(element string, n int) Path {
     	var q = p
 
-	defer t.Begin(element, n, p)()
+	defer t.Begin(element, n)()
 	i := 1 // for the findFirst
 	for q = q.FindFirst(element); i < n && q != nil ; q = q.FindNext(element) {
 		i++

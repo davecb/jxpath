@@ -196,7 +196,7 @@ func (l *Lexer) Pop() string {
 // in xml parse. Json uses pushback instead of lookahead.
 // Mat=ybe perhaps doomed
 func (l *Lexer) HasPrefix(s string) bool {
-	defer l.Begin(s)()
+	defer l.Begin()()
 
 	return strings.HasPrefix(l.input[l.pos:], s)
 }
