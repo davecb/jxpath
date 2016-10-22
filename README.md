@@ -3,7 +3,7 @@
 This is a path-expression program for experimenting with
 people's json and xml APIs.
 
-The business interest is in having a lightweight tool
+The nominal business problem is in having a lightweight tool
 for experimenting with APIs, that can generate code
 to compile parsers as well as interactively interpret
 the data. The latter is important when dealing
@@ -14,7 +14,10 @@ My personal interests, however, are different. They lie in
 * doing xpath for the third time (the first two were too
 big and too small, respectively)
 * using Elliotte Rusty Harold's simplification of element
-versus attribute, and
+versus attribute, 
+* doing an "explain" to show the production code to use, and
 * working in Go rather than Java or C++
 
-_These_ are why other people should be interested (:-))
+The last is the big thing: at the 13-hours-in mark, I'd decided
+I very much like Go.
+
