@@ -71,7 +71,6 @@ func lexTag(l *lexer.Lexer) stateFn {
 	// We have a <, do we have an </ or not?
 	l.Printf("right now, start is at %.40q ...\n", l.Rest())
 	l.Ignore()
-	l.Printf("after ignore, start is at %.40q ...\n", l.Rest())
 	tokenTypeFound = token.BEGIN // Subject to change, though
 	ch = l.Next()
 	if ch == '/' {
@@ -85,39 +84,46 @@ func lexTag(l *lexer.Lexer) stateFn {
 	// Process the characters up to the end character
 	for {
 		ch = l.Next()
+		//l.Printf("got %c\n", ch)
+
 		//  handle />
 		if ch == '/' {
 			// Then we hit /> or a grammar error
 			l.Backup()
-			l.Emit(tokenTypeFound, l.Current())
-			// emit an empty value
-			l.Emit(token.VALUE, "")
-			// and then end the type
-			l.Emit(token.END,l.Current())
+			if len(l.Current()) > 0 {
+				l.Emit(tokenTypeFound, l.Current())
+				// emit an empty value
+				l.Emit(token.VALUE, "")
+				// and then end the type
+				l.Emit(token.END, l.Current())
+			}
 			l.Next()
 			l.Next()
 			l.Ignore()
+			// otherwise there was nothing there or we just
+			// processed some attributes
 			return lexText
 		}
 
-		// consume, discarding including tag-end character
+		// handle >
 		if ch == '>' {
 			l.Backup()
-			l.Emit(tokenTypeFound, l.Current())
+			if len(l.Current()) > 0 {
+				l.Emit(tokenTypeFound, l.Current())
+			}
 			l.Next()
 			l.Ignore()
 			return lexText
 		}
 
-		// Whoops, it has whitespace in it
-		// the name ends, the rest is attributes
+		// handle whitespace, meaning do zero or more
+		// attributes, don't eat > or />
 		if unicode.IsSpace(rune(ch)) {
-			// stop the begin/end here
+			// Emit the begin or end here
 			l.Backup()
-			s = l.Current()
-
-			parseAttributes(l, tokenTypeFound, s) // must eat ? dunno
-			return lexTag // next thing may be < or \b
+			l.Emit(tokenTypeFound, l.Current())
+			l.Ignore()
+			parseAttributes(l)
 		}
 
 		// Bail on eof
@@ -136,35 +142,25 @@ func lexTag(l *lexer.Lexer) stateFn {
 	return nil
 }
 
-// parseAttributes doesn't: it skips over attributes mindlessly
-// mayve a recursive loop lexing until we hit the > then nil
-func parseAttributes(l *lexer.Lexer, typeFound token.Type, name string) {
+// parseAttributes starts a subloop getting name=value pairs until >
+func parseAttributes(l *lexer.Lexer) {
 	var ch int
-	defer l.Begin(typeFound, name)()
+	defer l.Begin()()
 
 	for {
 		ch = l.Next()
 		//l.Printf("got %c\n", ch)
 
-		if ch == '/' {
+		if ch == '/' || ch == '>' || ch == eof {
 			// Then we hit /> or a grammar error
-			l.Emit(typeFound, name)
-			l.Next() // get >
-			l.Emit(token.END, name)
+			l.Backup()
 			l.Ignore()
 			return
 		}
 
-		if ch == '>' {
-			l.Emit(typeFound, name)
-			l.Ignore()
-			l.Printf("after '>', rest=%.40q ...\n", l.Rest())
-			return
-		}
-		if ch == eof {
-			l.Backup()
-			return
-		}
+		// else do nothing
+		// later we will do A=B C=D
+
 	}
 }
 

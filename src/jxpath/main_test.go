@@ -13,7 +13,7 @@ import (
 )
 
 var xmlInput =
-	`<universe marvel="false">` + // hawking="true">` +
+	`<universe marvel="false" >` + // hawking="true">` +
 		`<galaxy>` +
 			`<world>` +
 				`nada` +
