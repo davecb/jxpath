@@ -1,4 +1,4 @@
-DIRS=./src/pathExpr ./src/xml ./src/json ./src/trace ./src/jxpath
+DIRS=./src/pathExpr ./src/xml ./src/json ./src/trace ./src/token ./src/jxpath
 FILES=${shell find ${DIRS} -type f  | egrep -v 'RCS|.iml|.idea'}
 
 all:

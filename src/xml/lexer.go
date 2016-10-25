@@ -32,8 +32,9 @@ func Lex(Input string, tp trace.Trace) ([]token.Token) {
 	// Simulate a parser, return only when done
 	var slice []token.Token
 	var tok token.Token
-	for {
-		tok = <- l.Pipe
+
+	for tok = range l.Pipe {
+		//tok = <- l.Pipe
 		slice = append(slice, tok)
 		if tok.Typ == token.EOF {
 			break

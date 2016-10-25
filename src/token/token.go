@@ -23,18 +23,16 @@ type Token struct {
 
 // Pad is what append pads slices with.
 const (
-	PAD Type = iota
+	EOF Type = iota
 	ERROR
-	EOF
 	BEGIN
 	VALUE
 	END
 )
 
 var tokenTypes = [...]string {
-	"PAD", // The type go will default to if the slice is auto-extended
+	"EOF", // The type go will default to if the slice is auto-extended
 	"ERROR",
-	"EOF",
 	"BEGIN",
 	"VALUE",
 	"END",
