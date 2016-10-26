@@ -174,7 +174,7 @@ func (l *Lexer) Push(name string ) {
 	defer l.Begin(name)()
 
 	l.stack = append(l.stack, name)
-	l.Printf("pushing onto %v\n", l.stack)
+	l.Printf("pushing %q onto %v\n", name, l.stack)
 }
 
 // Pop pops a <BEGIN>' name off for an <END name>

@@ -1,4 +1,5 @@
-DIRS=./src/pathExpr ./src/xml ./src/json ./src/trace ./src/token ./src/jxpath
+DIRS=./src/pathExpr ./src/xml ./src/json ./src/trace \
+     ./src/lexer ./src/token ./src/jxpath
 FILES=${shell find ${DIRS} -type f  | egrep -v 'RCS|.iml|.idea'}
 
 all:
@@ -16,9 +17,11 @@ co:
 	co -l ${FILES}
 
 out: # rcsout
-	for i in ${DIRS}; do \
+	-for i in ${DIRS}; do \
+		echo -n "$$i: " ; \
 		(cd $$i; rcsout); \
-	done
+	done; \
+	echo ""
 
 rcsl:
 	rcs -l ${FILES}

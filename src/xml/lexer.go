@@ -124,7 +124,7 @@ func lexTag(l *lexer.Lexer) stateFn {
 			l.Backup()
 			l.Emit(tokenTypeFound, l.Current())
 			l.Ignore()
-			parseAttributes(l)
+			lexAttributes(l)
 		}
 
 		// Bail on eof
@@ -143,24 +143,62 @@ func lexTag(l *lexer.Lexer) stateFn {
 	return nil
 }
 
-// parseAttributes starts a subloop getting name=value pairs until >
-func parseAttributes(l *lexer.Lexer) {
+// lexAttributes starts a subloop getting name=value pairs until >
+func lexAttributes(l *lexer.Lexer) {
+	defer l.Begin()()
+
+	for state := lexOneAttr; state != nil; {
+		state = state(l)
+	}
+}
+
+// lexOneAttr gets one name=value pair
+// Restricted to x=y with no spaces around the =
+func lexOneAttr(l *lexer.Lexer) stateFn {
 	var ch int
 	defer l.Begin()()
 
+	l.Next() // skip whitespace
+	l.Ignore()
 	for {
 		ch = l.Next()
-		//l.Printf("got %c\n", ch)
+		l.Printf("got %c\n", ch)
 
 		if ch == '/' || ch == '>' || ch == eof {
 			// Then we hit /> or a grammar error
 			l.Backup()
-			l.Ignore()
-			return
+			if len(l.Current()) > 0 {
+				l.Emit(token.VALUE, l.Current())
+				l.Emit(token.END, l.Pop())
+			}
+			return nil
 		}
 
-		// else do nothing
-		// later we will do A=B C=D
+		if unicode.IsSpace(rune(ch)) {
+			// end of the attribute
+			l.Backup()
+			if len(l.Current()) > 0 {
+				l.Emit(token.VALUE, l.Current())
+				l.Emit(token.END, l.Pop())
+			}
+			return lexOneAttr
+		}
+
+		if ch == '=' {
+			// we have the name, save it and start the value
+			l.Backup()
+			l.Push(l.Current())
+			l.Emit(token.BEGIN, l.Current())
+			l.Next()
+			l.Ignore()
+		}
+
+		if ch == '"' {
+			l.Backup()
+			s := l.AcceptQstring()
+			l.Emit(token.VALUE, s)
+			l.Emit(token.END, l.Pop())
+		}
 
 	}
 }

@@ -46,7 +46,8 @@ func parse(l *lexer.Lexer, slice []token.Token) []token.Token {
 	var tok token.Token
 
 	//defer l.Begin()()
-	for tok = range l.Pipe {
+	for {
+		tok = <- l.Pipe
 		slice = append(slice, tok)
 		//l.Printf("parse: appending %v to the slice\n", tok)
 		if tok.Typ == token.EOF || tok.Typ == token.ERROR {
