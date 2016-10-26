@@ -1,7 +1,9 @@
 **jxpath -- path expressions for json**
 
 This is a path-expression program for experimenting with
-people's json and xml APIs.
+people's json and xml APIs.  The real story, however, is 
+in [13 Hours of Go](./Thirteen_Talk.odp)
+
 
 The nominal business problem is in having a lightweight tool
 for experimenting with APIs, that can generate code
