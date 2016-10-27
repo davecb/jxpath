@@ -18,9 +18,9 @@ big and too small, respectively)
 * using Elliotte Rusty Harold's simplification of element
 versus attribute, 
 * doing an "explain" to show the production code to use, and
-* working in Go rather than Java or C++
+* trying out Go rather than being stuck with Java or C++
 
 The last is the big thing: at the 13-hours-in mark, I'd decided
-I very much like Go.
+I very much like Go. It makes me productive.
 
-[Things still to do: json arrays, big refactor to make parser know what lexer does and simplify lexer, TBA]
+[Things still to do in the example program: json arrays, big refactor to make parser know what lexer does and simplify lexer, TBA]
