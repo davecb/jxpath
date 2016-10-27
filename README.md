@@ -23,3 +23,4 @@ versus attribute,
 The last is the big thing: at the 13-hours-in mark, I'd decided
 I very much like Go.
 
+[Things still to do: json arrays, big refactor to make parser know what lexer does and simplify lexer, TBA]
