@@ -23,4 +23,5 @@ versus attribute,
 The last is the big thing: at the 13-hours-in mark, I'd decided
 I very much like Go. It makes me productive.
 
-[Things still to do in the example program: json arrays, big refactor to make parser know what lexer does and simplify lexer, TBA]
+[Yes, I know about jq, I use it a lot. This is different.
+Things still to do in the example program: json arrays, big refactor to make parser know what lexer does and simplify lexer, TBA]
